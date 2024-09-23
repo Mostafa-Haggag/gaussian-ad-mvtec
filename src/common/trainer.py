@@ -7,7 +7,7 @@ import numpy as np
 
 from pytorch_lightning import Trainer, LightningModule
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-from pytorch_lightning.logging import TestTubeLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from .dataset import AnomalyDetectionDataset
 import warnings
@@ -15,7 +15,13 @@ import warnings
 
 def get_dataset_class(name: str) -> AnomalyDetectionDataset:
     module = import_module("src.datasets." + name)
-    Dataset = module.DATASET
+    # import_module comes from Python's importlib module and allows dynamic importing of a module by its string name.
+    # This is especially useful when you need to import a module at runtime, where the module name is determined
+    # programmatically.
+    # It returns the imported module as an object,
+    # which you can interact with as you would with a statically imported module.
+    Dataset = module.DATASET # he calls MVTecAD in here
+    # DATASET is variable inside the module
     if not issubclass(Dataset, AnomalyDetectionDataset):
         raise ValueError(
             "Dataset {} must inherit from "
@@ -31,6 +37,7 @@ def get_model_class(name: str) -> LightningModule:
 
 def new_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
+    # i want to know which model you should be using in here
     parser.add_argument(
         "--model",
         type=str,
@@ -38,6 +45,7 @@ def new_parser() -> argparse.ArgumentParser:
         help="The model folder to instantiate and train "
         "(relative to the src folder)",
     )
+    # This is used to get to know the correct dataset that you should work on
     parser.add_argument(
         "--dataset",
         type=str,
@@ -45,7 +53,9 @@ def new_parser() -> argparse.ArgumentParser:
         help="The dataset module to instantiate "
         "(relative to src.datasets folder)",
     )
+    # the number of gpus that shoud be used
     parser.add_argument("--gpus", type=str, default=None)
+    # what is the difference between number of iteration
     parser.add_argument(
         "--max_nb_iters",
         type=int,
@@ -60,6 +70,9 @@ def new_parser() -> argparse.ArgumentParser:
         help="Minimum number of iterations to train for "
         "(last epoch still finishes",
     )
+    # and the number of epochs
+    # what is the difference between both ?
+
     parser.add_argument(
         "--max_nb_epochs",
         type=int,
@@ -72,24 +85,29 @@ def new_parser() -> argparse.ArgumentParser:
         default=None,
         help="Minimum number of epochs to train for",
     )
+    # number of times to evalute
     parser.add_argument(
         "--eval_freq",
         type=int,
         default=1,
         help="Validate every --eval_freq epochs",
     )
+    # path where logs should go
     parser.add_argument(
         "--logpath",
         type=str,
         default=os.getcwd(),
         help="The path where logs should go",
     )
+    # what is this and how is it to be used?
     parser.add_argument(
         "--version",
         type=int,
         default=None,
         help="Use a deterministic version for logging",
     )
+
+    # what is this exacly? we shoud understand
     parser.add_argument(
         "--fold",
         type=int,
@@ -139,13 +157,12 @@ def main(
         )
         hparams.min_nb_epochs = 1
 
-    # Same as the default TestTubeLogger in lightning, but with args.version.
-    logger = TestTubeLogger(
-        save_dir=hparams.logpath,
-        version=hparams.version,
-        name="lightning_logs",
+    # Same as the default TensorBoardLogger in lightning, but with args.version.
+    logger = TensorBoardLogger(
+        save_dir=hparams.logpath,  # Path to save logs
+        version=hparams.version,  # Version for the logs
+        name="lightning_logs",  # Name of the log directory
     )
-
     if hparams.model == "classifier":
         # Only allow auroc-based validation in fully supervised classification.
         monitor = "auroc/val"
@@ -204,7 +221,13 @@ if __name__ == "__main__":
     # First load a dummy parser to instantiate the correct dataset and model.
     parser = new_parser()
     parser.add_argument("args", nargs=argparse.REMAINDER)
+    # This line is adding an argument named "args" to the argument parser
+    # nargs=argparse.REMAINDER means that this argument will capture all remaining command-line arguments after the
+    # recognized ones. Essentially, this collects any arguments not explicitly defined before this in the argparse parser.
     globalparams, unknown = parser.parse_known_args()
+    # globalparams will contain the recognized (known) arguments (those explicitly defined in the add_argument() calls).
+    # unknown will store any unknown arguments (those that do not match any add_argument()).
+    # Together, this setup allows you to handle both predefined and unrecognized arguments.
     Dataset = get_dataset_class(globalparams.dataset)
     Model = get_model_class(globalparams.model)
 

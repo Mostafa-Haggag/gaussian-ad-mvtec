@@ -55,6 +55,7 @@ class MVTecAD(AnomalyDetectionDataset):
     """Texture categories."""
 
     flip_aligned_hor = ["cable", "capsule", "metal_nut", "pill", "screw"]
+    # USE this for capsule and pill
     """Aligned to horizontal flips, i.e. all images are correctly flipped."""
 
     flip_symmetric_hor = [
@@ -79,6 +80,7 @@ class MVTecAD(AnomalyDetectionDataset):
         "transistor",
         "zipper",
     ]
+    # USE this for capsule and pill
     """Objects that are aligned to point upwards and may not be rotated at all."""
 
     rotation_aligned_90 = [
@@ -90,6 +92,7 @@ class MVTecAD(AnomalyDetectionDataset):
         "wood",
         "zipper",
     ]
+    # USE this for capsule and pill
     """Objects that are aligned to 90 degree rotations in either direction."""
 
     rotation_aligned_180 = [
@@ -100,6 +103,7 @@ class MVTecAD(AnomalyDetectionDataset):
         "transistor",
         "zipper",
     ]
+    # USE this for capsule and pill
     """Objects that are aligned to 180 degree rotations, i.e. they have an 'up' side."""
 
     rotation_symmetric = ["bottle", "leather", "metal_nut", "tile"]
@@ -149,6 +153,8 @@ class MVTecAD(AnomalyDetectionDataset):
             target_transform (callable): transform to apply on dataset labels (is cached).
             uncached_transform (callable): transform to apply on dataset images (not cached between __getitem__ calls).
         """
+        # question that i want to ask myself in here what is the different between ached and
+        # uncached transforms
         super().__init__(
             root=root,
             train=train,
@@ -163,7 +169,9 @@ class MVTecAD(AnomalyDetectionDataset):
         categories = [
             hparams.category
         ]  # The following allows multiple categories.
+        # you are passing a list of cateogries in here or just one category up to you
         if categories is None:
+            # in case you donot pass a category in the arg parser you loop over all of them
             self.categories = self.available_categories
         else:
             if not (set(categories) <= set(self.available_categories)):
@@ -172,6 +180,7 @@ class MVTecAD(AnomalyDetectionDataset):
                         self.available_categories
                     )
                 )
+            # this indicate an error 
             self.categories = sorted(
                 categories
             )  # Don't be needlessly undeterministic on swapped categories.
@@ -409,4 +418,5 @@ class MVTecAD(AnomalyDetectionDataset):
 
 
 # The DATASET variable controls which class is instantiated
+# this is how he calls the current model
 DATASET = MVTecAD
